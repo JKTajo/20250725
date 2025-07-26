@@ -3,21 +3,21 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 
-# 페이지 설정
+# --- 페이지 설정 ---
 st.set_page_config(
     page_title="발리 힐링 여행 코스 추천",
     page_icon="🌴",
     layout="wide",
 )
 
-st.title('🇮🇩 7월 말, 발리 힐링 여행 코스 추천')
-
+# --- 제목 및 설명 ---
+st.title("🇮🇩 7월 말, 발리 힐링 여행 코스 추천")
 st.write("""
 7월의 발리는 건기에 속해 여행하기 가장 좋은 시기입니다. 쾌적한 날씨 속에서 발리의 아름다운 자연과 문화를 만끽해 보세요.
 아래 추천 코스는 발리의 핵심 지역을 둘러보며 휴양과 관광을 모두 즐길 수 있도록 구성했습니다.
 """)
 
-# 여행지 위치
+# --- 장소 데이터 ---
 locations = {
     '스미냑 비치': [-8.6917, 115.1583], '짱구 비치': [-8.6593, 115.1385],
     '우붓 왕궁': [-8.5069, 115.2624], '우붓 시장': [-8.5076, 115.2622],
@@ -38,34 +38,51 @@ restaurants = {
     'Fat Chow (꾸따)': {'lat': -8.7159, 'lon': 115.1712, 'desc': '맛있는 아시안 퓨전 요리'}
 }
 
-# 병원 정보 추가
 hospitals = {
     "BIMC Hospital Kuta": {
         "lat": -8.7167,
         "lon": 115.1783,
         "address": "Jl. By Pass Ngurah Rai No.100X, Kuta, Bali",
-        "phone": "+62 361 761263"
+        "phone": "+62 361 761263",
+        "foreigner_friendly": True
     },
     "Siloam Hospitals Denpasar": {
         "lat": -8.6723,
         "lon": 115.2176,
         "address": "Jl. Sunset Road No.818, Denpasar, Bali",
-        "phone": "+62 361 779900"
+        "phone": "+62 361 779900",
+        "foreigner_friendly": True
     },
     "Rumah Sakit Umum Sanglah": {
         "lat": -8.6694,
         "lon": 115.2190,
         "address": "Jl. Diponegoro, Denpasar, Bali",
-        "phone": "+62 361 227911"
+        "phone": "+62 361 227911",
+        "foreigner_friendly": False
     }
 }
 
+# --- 탭 UI 구성 ---
 tab1, tab2, tab3 = st.tabs(["🗺️ 여행 지도", "🗓️ 세부 일정", "🍽️ 맛집 리스트"])
 
+# --- 지도 탭 ---
 with tab1:
     st.header("📍 여행지 + 맛집 + 병원 지도")
 
-    m = folium.Map(location=[-8.5, 115.2], zoom_start=10)
+    selected_spot = st.selectbox(
+        "🗓️ 세부 일정 중 관심 장소를 선택하면 지도에서 위치를 확인할 수 있어요.",
+        list(locations.keys()) + list(restaurants.keys())
+    )
+
+    # 지도 중심 위치 계산
+    center = None
+    if selected_spot in locations:
+        center = locations[selected_spot]
+    elif selected_spot in restaurants:
+        center = [restaurants[selected_spot]["lat"], restaurants[selected_spot]["lon"]]
+
+    # 지도 생성
+    m = folium.Map(location=center if center else [-8.5, 115.2], zoom_start=13 if center else 10)
 
     # 여행지 마커
     for name, coords in locations.items():
@@ -85,73 +102,80 @@ with tab1:
 
     # 병원 마커
     for name, info in hospitals.items():
+        popup_html = (
+            f"<b>{name}</b><br>"
+            f"{info['address']}<br>📞 {info['phone']}<br>"
+            f"🌐 외국인 진료 가능: {'✅' if info['foreigner_friendly'] else '❌'}"
+        )
         folium.Marker(
             location=[info['lat'], info['lon']],
-            popup=f"<b>{name}</b><br>{info['address']}<br>📞 {info['phone']}",
+            popup=popup_html,
             icon=folium.Icon(color='red', icon='plus-sign')
+        ).add_to(m)
+
+    # 선택된 장소 강조 마커
+    if center:
+        folium.Marker(
+            location=center,
+            popup=f"<b>{selected_spot}</b>",
+            icon=folium.Icon(color='orange', icon='star')
         ).add_to(m)
 
     st_data = st_folium(m, width=1200, height=600)
 
-# tab2, tab3 그대로 유지 (복사 붙여넣기 가능 — 길어서 생략)
+# --- 일정 탭 ---
 with tab2:
     st.header("🗓️ 4박 5일 세부 추천 일정")
 
-    # 아코디언 형태로 일정 제공
     with st.expander("**Day 1: 스미냑/짱구 - 활기찬 해변과 트렌디한 감성**", expanded=True):
         st.markdown("""
-        - **오후**: 응우라라이 국제공항 도착 후, 스미냑 또는 짱구 지역의 숙소로 이동합니다.
-        - **저녁**: 해변에 위치한 레스토랑이나 비치 클럽에서 발리의 첫날밤을 즐겨보세요. 서핑으로 유명한 곳인 만큼, 해변의 활기찬 분위기를 느낄 수 있습니다.
-        - **주요 스팟**: 스미냑 비치, 짱구 비치, 포테이토 헤드 비치 클럽
+        - **오후**: 공항 도착 후 스미냑 또는 짱구 숙소 이동
+        - **저녁**: 해변 레스토랑 또는 비치 클럽 방문
+        - **주요 스팟**: 스미냑 비치, 짱구 비치, 포테이토 헤드 클럽
         """)
 
     with st.expander("**Day 2: 우붓 - 발리의 예술과 영혼을 만나다**"):
         st.markdown("""
-        - **오전**: 발리의 문화 중심지, 우붓으로 이동합니다.
-        - **오후**: 우붓 왕궁과 활기 넘치는 우붓 시장을 둘러보며 현지 공예품을 구경하세요. 그 후, 긴꼬리원숭이들이 자유롭게 살아가는 몽키 포레스트를 방문합니다.
-        - **주요 스팟**: 우붓 왕궁, 우붓 시장, 몽키 포레스트
+        - **오전**: 우붓 이동, 문화탐방
+        - **오후**: 우붓 왕궁, 우붓 시장, 몽키 포레스트 탐방
         """)
 
-    with st.expander("**Day 3: 우붓 근교 - 인생 사진과 함께하는 자연 탐험**"):
+    with st.expander("**Day 3: 우붓 근교 자연 탐험**"):
         st.markdown("""
-        - **오전**: '천국의 문'으로 유명한 렘푸양 사원으로 떠납니다. 아궁 화산을 배경으로 멋진 사진을 남겨보세요. (대기 시간이 길 수 있으니 아침 일찍 출발하는 것을 추천합니다.)
-        - **오후**: 옛 발리 왕족의 휴양지였던 물의 궁전, 띠르따 강가를 산책하고, 대표적인 포토 스팟인 뜨갈랄랑 계단식 논을 방문합니다.
-        - **주요 스팟**: 렘푸양 사원, 띠르따 강가, 뜨갈랄랑
+        - **오전**: 렘푸양 사원 방문 (천국의 문)
+        - **오후**: 띠르따 강가, 뜨갈랄랑 계단식 논 방문
         """)
 
-    with st.expander("**Day 4: 울루와뚜/짐바란 - 장엄한 절벽과 로맨틱한 일몰**"):
+    with st.expander("**Day 4: 울루와뚜 / 짐바란**"):
         st.markdown("""
-        - **오후**: 발리 남쪽의 울루와뚜 절벽 사원으로 이동하여 인도양의 탁 트인 절경을 감상합니다.
-        - **저녁**: 해질녘에 맞춰 발리 전통 공연인 케착 파이어 댄스를 관람하고, 짐바란 해변으로 이동해 갓 잡은 신선한 해산물로 로맨틱한 저녁 식사를 즐깁니다.
-        - **주요 스팟**: 울루와뚜 사원, 짐바란 베이
+        - **오후**: 울루와뚜 사원 절벽뷰 감상
+        - **저녁**: 케착 댄스 공연 → 짐바란 해변 해산물 BBQ
         """)
 
-    with st.expander("**Day 5: 출국 - 마지막 여운 즐기기**"):
+    with st.expander("**Day 5: 꾸따 및 출국**"):
         st.markdown("""
-        - **오전**: 비행기 시간에 맞춰 꾸따 비치 근처의 쇼핑몰이나 스미냑 거리에서 마지막 쇼핑을 즐깁니다.
-        - **오후**: 공항으로 이동하여 아쉬운 발리 여행을 마무리합니다.
-        - **주요 스팟**: 꾸따 비치, 비치워크 쇼핑센터
+        - **오전**: 꾸따 비치 산책, 쇼핑
+        - **오후**: 공항 이동 및 출국
         """)
 
-
+# --- 맛집 탭 ---
 with tab3:
     st.header("🍽️ 지역별 추천 맛집")
-    st.write("여행 코스에 맞춰 방문하기 좋은 검증된 맛집 리스트입니다.")
 
     st.subheader("🌴 스미냑 / 짱구")
-    st.text("La Favela: 신비로운 정글 컨셉의 인테리어가 인상적인 곳")
-    st.text("The Shady Shack: 건강하고 맛있는 채식 요리를 즐길 수 있는 곳")
+    st.text("La Favela: 신비로운 정글 컨셉의 바 & 레스토랑")
+    st.text("The Shady Shack: 건강한 채식 요리")
 
     st.subheader("🌳 우붓")
-    st.text("Naughty Nuri's Warung: 부드러운 폭립과 특제 소스의 환상적인 조화")
-    st.text("Warung Babi Guling Ibu Oka: 발리 전통 음식 '바비굴링'의 정석")
-    st.text("Sari Organik: 아름다운 논밭을 바라보며 즐기는 힐링 푸드")
+    st.text("Naughty Nuri's Warung: 부드러운 폭립")
+    st.text("Warung Babi Guling Ibu Oka: 전통 바비굴링")
+    st.text("Sari Organik: 논밭 뷰 유기농 레스토랑")
 
     st.subheader("🌊 짐바란 / 울루와뚜")
-    st.text("Jimbaran Bay Seafood: 해변의 노을을 보며 즐기는 낭만적인 해산물 BBQ")
-    st.text("Bumbu Bali 1: 인도네시아의 다양한 향신료를 경험할 수 있는 정통 발리 요리")
+    st.text("Jimbaran Bay Seafood: 바닷가 BBQ")
+    st.text("Bumbu Bali 1: 정통 발리 요리")
 
     st.subheader("☀️ 꾸따")
-    st.text("Fat Chow: 다양한 아시안 퓨전 음식을 맛볼 수 있는 트렌디한 맛집")
+    st.text("Fat Chow: 트렌디한 아시안 퓨전 요리")
 
-    st.info("💡 **여행 Tip**: 발리 내에서 지역 간 이동은 '그랩(Grab)'이나 '고젝(Gojek)' 같은 차량 호출 앱을 이용하면 편리합니다. 또는 전일 차량을 대절하여 원하는 코스대로 자유롭게 여행하는 것도 좋은 방법입니다.")
+    st.info("💡 Grab / Gojek 앱으로 지역 간 이동이 편리합니다.")
