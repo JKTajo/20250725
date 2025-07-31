@@ -5,7 +5,7 @@
     "colab": {
       "provenance": [],
       "authorship_tag": "ABX9TyPO5FmTa0qqBgiZ7W9BwKaf",
-      "include_colab_link": True
+      "include_colab_link": true
     },
     "kernelspec": {
       "name": "python3",
@@ -23,12 +23,12 @@
         "colab_type": "text"
       },
       "source": [
-        "<a href=\"https://colab.research.google.com/github/JKTajo/20250725/blob/main/Seoulbike.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+        "<a href=\"https://colab.research.google.com/github/JKTajo/20250725/blob/main/Seoulbike.py\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
       ]
     },
     {
       "cell_type": "code",
-      "execution_count": None,
+      "execution_count": null,
       "metadata": {
         "id": "wC3bH50cJNma"
       },
